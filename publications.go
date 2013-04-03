@@ -1,5 +1,8 @@
 package webserv
 
+// Plug-in that parses citation files (.ciw, RIS format)
+// and generates a nice publication list.
+
 import (
 	"bufio"
 	"bytes"
@@ -12,11 +15,13 @@ import (
 )
 
 var (
-	pubs        []*pub
-	pubcontent  *Content
-	pubTemplate *template.Template
+	pubdir      string             // directory with RIS files
+	pubs        []*pub             // raw RIS conent
+	pubTemplate *template.Template // template to render RIS content to html
+	pubcontent  *Content           // RIS content rendered to html
 )
 
+// stores the content of a parsed RIS file.
 type pub struct {
 	Author     []string
 	Title      string
@@ -26,6 +31,8 @@ type pub struct {
 	RIS        string
 }
 
+// maps author name patterns to hyperrefs.
+// e.g.: Vansteenkiste -> /people/arne
 var pubref = map[string]string{}
 
 // Register an author last name for cross referencing.
@@ -44,7 +51,9 @@ func PubXRefAuthor(regexp, href string) {
 // To be called after PubXRefAuthor calls, if any.
 func LoadPublications(dir string) {
 
-	SetHandler("/"+dir, pubHandler)
+	Log("loading publications in", dir)
+	pubdir = "/" + dir
+	SetHandler(pubdir, pubHandler)
 	pubTemplate = loadTemplate(dir + "/template.html")
 
 	ls := readDir(dir)
@@ -76,7 +85,6 @@ func parseRIS(fname string) *pub {
 	l, _, err := in.ReadLine()
 	key, val := string(l[:2]), string(l[3:])
 	for len(l) > 3 {
-
 		p.Add(key, val)
 
 		l, _, err = in.ReadLine()
@@ -88,13 +96,11 @@ func parseRIS(fname string) *pub {
 			val = string(l[3:])
 		}
 	}
-	//Log(p)
 	return p
 }
 
+// add a key/value pair (one line of the RIS file) to the data already stored in pub
 func (p *pub) Add(key, val string) {
-	//	Log("pub", key, val)
-
 	switch key {
 	case "AF":
 		val = xrefAuthor(val)
@@ -123,6 +129,7 @@ func xrefAuthor(name string) string {
 	return name
 }
 
+// turn pub data into html, using template.
 func (p *pub) Render() string {
 	var w bytes.Buffer
 	fatalErr(pubTemplate.Execute(&w, p)) // TODO: not fatal, just panic and catch
