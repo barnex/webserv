@@ -12,9 +12,10 @@ import (
 	"time"
 )
 
-var rootTemplate *template.Template
-
-var rootNode *Content
+var(
+ rootNode *Content
+ rootTemplate *template.Template
+)
 
 // The root template (homedir/template.html, with homedir the directory passed to LoadContent)
 // is executed with this data structure as input. Thus, the fields and methods of this struct
@@ -78,7 +79,7 @@ func loadDir(p string) *Content {
 	for _, f := range ls {
 		fullname := readlink(p + "/" + f.Name())
 		f = stat(fullname)
-		if f.IsDir() {
+		if f.IsDir() && !strings.HasPrefix(f.Name(), "."){
 			Content.addChild(loadDir(fullname))
 		} else {
 			if strings.HasSuffix(fullname, ".html") && f.Name() != "index.html" && f.Name() != "template.html" {

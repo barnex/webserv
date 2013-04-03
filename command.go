@@ -5,11 +5,7 @@ import (
 	"os/exec"
 )
 
-type Cmd struct {
-	cmd  string
-	args []string
-}
-
+// handler that executes the command and returns the output
 func Command(cmd string, args ...string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		out, err := exec.Command(cmd, args...).CombinedOutput()
