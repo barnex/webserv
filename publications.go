@@ -77,7 +77,7 @@ func LoadPublications(dir string) {
 // makes publication list sortable
 type publist []*pub
 func(p publist)Len()int{return len(p)}
-func(p publist)Less(i,j int)bool{return p[i].Year < p[j].Year}
+func(p publist)Less(i,j int)bool{return p[i].Year > p[j].Year} // most recent first
 func(p publist)Swap(i,j int){ p[i], p[j] = p[j], p[i]}
 
 func pubHandler(w http.ResponseWriter, r *http.Request) {
