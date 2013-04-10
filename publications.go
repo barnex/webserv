@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"regexp"
 	"text/template"
 )
@@ -29,6 +30,7 @@ type pub struct {
 	Journal    string
 	Date, Year string
 	RIS        string
+	DOI        string
 }
 
 // maps author name patterns to hyperrefs.
@@ -64,11 +66,19 @@ func LoadPublications(dir string) {
 		}
 	}
 
+	sort.Sort(publist(pubs))
+
 	pubcontent = newContent("Publication list", "", "")
 	for i := range pubs {
 		pubcontent.addChild(newContent("", "", pubs[i].Render()))
 	}
 }
+
+// makes publication list sortable
+type publist []*pub
+func(p publist)Len()int{return len(p)}
+func(p publist)Less(i,j int)bool{return p[i].Year < p[j].Year}
+func(p publist)Swap(i,j int){ p[i], p[j] = p[j], p[i]}
 
 func pubHandler(w http.ResponseWriter, r *http.Request) {
 	renderContent(pubcontent, w, r)
@@ -115,6 +125,8 @@ func (p *pub) Add(key, val string) {
 		p.Date = val
 	case "PY":
 		p.Year = val
+	case "DI":
+		p.DOI = val
 	}
 }
 
